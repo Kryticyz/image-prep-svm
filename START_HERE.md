@@ -1,8 +1,10 @@
-# 🌱 START HERE - SVM Plant Classification
+# START HERE 
 
-**Welcome to the SVM Plant Image Classification Project!**
+**Welcome to the SVM Binary Image Classification Project!**
 
-This is your starting point for classifying plant images using Support Vector Machines (SVM). This guide will help you navigate the documentation and get started quickly.
+This is your starting point for classifying images using Support Vector Machines (SVM). This guide will help you navigate the documentation and get started quickly.
+
+This project is intended for users who have an existing dataset of images that have been sorted in some way, and wish to continue this sorting process in an automated fashion. The goal is to quickly find out if a particular sorting process can be automated using this system. The goal is not to make the system fit your needs perfectly, or for the system to generalise. Instead this is a low cost, potentially high reward system for assisting data organisation in preparation for further machine learning tasks.
 
 ---
 
@@ -246,26 +248,6 @@ python quick_start.py
 
 ---
 
-## 📊 What This Project Does
-
-In simple terms:
-
-```
-Input: Photo of a plant
-   ↓
-[SVM Classifier]
-   ↓
-Output: "This is your target species" (with confidence %)
-```
-
-**Use cases:**
-- ✅ Identify specific plant species from photos
-- ✅ Distinguish target species from similar-looking plants
-- ✅ Automated plant classification for research
-- ✅ Learning machine learning with real applications
-
----
-
 ## 🎓 Learning Resources
 
 ### Inside This Project
@@ -289,8 +271,6 @@ Before you start, make sure you have:
 - [ ] Read this START_HERE.md file
 - [ ] Decided which path to follow (A, B, C, or D above)
 - [ ] 30+ minutes available (for first time)
-
-Ready? Pick your path above and get started!
 
 ---
 
@@ -318,10 +298,6 @@ Ready? Pick your path above and get started!
 
 ---
 
-**Welcome aboard! Let's classify some plants! 🌿🔬**
-
----
-
-*Last Updated: 2024*
-*Project: SVM Plant Image Classification*
+*Last Updated: 2025*
+*Project: SVM Binary Image Classification*
 *License: MIT*
