@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Quick Start Script for SVM Plant Classification
+Quick Start Script for SVM Binary Classification
 
 This script demonstrates the complete workflow for training and using
-an SVM-based plant species classifier.
+an SVM-based binary classifier.
 """
 
 import os
@@ -19,11 +19,11 @@ from train_svm import SVMPlantClassifier, save_results, visualize_results
 
 def quick_start():
     """
-    Quick start guide for SVM plant classification.
+    Quick start guide for SVM binary classification.
     """
 
     print("=" * 70)
-    print(" SVM PLANT CLASSIFICATION - QUICK START")
+    print(" SVM BINARY CLASSIFICATION - QUICK START")
     print("=" * 70)
 
     print("\nThis script will guide you through:")
@@ -46,7 +46,7 @@ def quick_start():
         print("\n⚠️  No dataset found!")
         print("\nOptions:")
         print("  1. Create a synthetic dataset for testing")
-        print("  2. Organize existing images (if you have Myosotis_sylvatica images)")
+        print("  2. Organize existing images from src/load (before/after structure)")
         print("  3. Exit and manually add images to data/ directory")
 
         choice = input("\nEnter your choice (1, 2, or 3): ").strip()
@@ -57,49 +57,65 @@ def quick_start():
             print("✓ Synthetic dataset created!")
 
         elif choice == "2":
-            myosotis_dir = "src/Myosotis_sylvatica"
-            if os.path.exists(myosotis_dir):
-                print(f"\n📂 Found images in {myosotis_dir}")
-                print("Organizing as target species...")
-                data_loader.organize_data_from_source(
-                    source_dir=myosotis_dir,
-                    test_size=0.2,
-                    random_state=42,
-                    class_label="target_species",
-                )
-                print("✓ Data organized!")
-                print("\n⚠️  Note: You still need to add 'other_species' images!")
-                print("   Please add images to data/train/other_species/")
-                print("   and data/test/other_species/")
+            load_dir = "src/load"
+            before_dir = os.path.join(load_dir, "before")
+            after_dir = os.path.join(load_dir, "after")
 
-                # Create synthetic other species
-                print("\nCreating synthetic 'other species' for demonstration...")
-                import numpy as np
-                from PIL import Image
+            # Check if before/after structure exists
+            if os.path.exists(before_dir) and os.path.exists(after_dir):
+                print(f"\n📂 Found before/after structure in {load_dir}")
+                print("\nExpected structure:")
+                print("  src/load/before/ - All images (unsorted)")
+                print("  src/load/after/  - Target species only (sorted)")
+                print("\nOrganizing images...")
 
-                os.makedirs("data/train/other_species", exist_ok=True)
-                os.makedirs("data/test/other_species", exist_ok=True)
+                # Import organize_from_before_after function
+                import sys
 
-                for split, n_samples in [("train", 80), ("test", 20)]:
-                    split_dir = os.path.join(data_root, split, "other_species")
-                    for i in range(n_samples):
-                        img_array = np.random.randint(
-                            0, 255, (224, 224, 3), dtype=np.uint8
-                        )
-                        img_array[:, :, 0] = np.clip(img_array[:, :, 0] + 50, 0, 255)
-                        img = Image.fromarray(img_array)
-                        img.save(
-                            os.path.join(split_dir, f"synthetic_other_{i:04d}.png")
-                        )
+                sys.path.insert(0, "src")
+                from organize_dataset import organize_from_before_after
 
-                print("✓ Synthetic other species created!")
+                try:
+                    stats = organize_from_before_after(
+                        load_dir=load_dir,
+                        data_root=data_root,
+                        test_size=0.2,
+                        random_state=42,
+                        copy=True,
+                        verbose=True,
+                    )
+                    print("\n✓ Data organized successfully!")
+                    print(
+                        f"   Target species: {stats['target_species']['total_images']} images"
+                    )
+                    print(
+                        f"   Other species: {stats['other_species']['total_images']} images"
+                    )
+                except Exception as e:
+                    print(f"\n✗ Error organizing data: {str(e)}")
+                    print("\nPlease ensure:")
+                    print("  - 'before' directory contains all images")
+                    print("  - 'after' directory contains only target species")
+                    print("  - Images use supported formats (jpg, png, etc.)")
+                    return
             else:
-                print(f"\n✗ Directory not found: {myosotis_dir}")
-                print("Please manually add images or choose option 1")
+                print(f"\n✗ Before/after structure not found in {load_dir}")
+                print("\nPlease create the following structure:")
+                print("  src/load/before/ - Place all images here (unsorted)")
+                print(
+                    "  src/load/after/  - Place only target species images here (sorted)"
+                )
+                print("\nAlternatively, choose option 1 to create synthetic data")
                 return
 
         else:
-            print("\nPlease add images manually to:")
+            print("\nTo add images manually, you have two options:")
+            print("\nOption A - Use before/after structure (recommended):")
+            print("  1. Create: src/load/before/ and src/load/after/")
+            print("  2. Place all images in 'before' directory")
+            print("  3. Place only target species in 'after' directory")
+            print("  4. Run: python quick_start.py and choose option 2")
+            print("\nOption B - Direct placement:")
             print("  - data/train/target_species/")
             print("  - data/train/other_species/")
             print("  - data/test/target_species/")

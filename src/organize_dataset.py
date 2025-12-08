@@ -4,6 +4,10 @@ Dataset Organization Utility Script
 This script helps organize plant images into the proper structure for training
 the SVM classifier. It handles splitting data into train/test sets and organizing
 images into target_species and other_species directories.
+
+New functionality: Supports organizing from 'before/after' directory structure
+where 'after' contains target species and 'before' contains all images.
+Non-target images are automatically identified as those in 'before' but not in 'after'.
 """
 
 import argparse
@@ -198,6 +202,224 @@ def organize_multiple_classes(
     return all_stats
 
 
+def organize_files_list(
+    file_list,
+    data_root,
+    class_label,
+    test_size=0.2,
+    random_state=42,
+    copy=True,
+    verbose=True,
+):
+    """
+    Organize images from a list of file paths into train/test splits.
+
+    Args:
+        file_list (list): List of image file paths
+        data_root (str): Root directory for organized data
+        class_label (str): 'target_species' or 'other_species'
+        test_size (float): Proportion of data for testing
+        random_state (int): Random seed for reproducibility
+        copy (bool): If True, copy files; if False, move files
+        verbose (bool): Print progress information
+
+    Returns:
+        dict: Statistics about organized data
+    """
+    if class_label not in ["target_species", "other_species"]:
+        raise ValueError("class_label must be 'target_species' or 'other_species'")
+
+    if len(file_list) == 0:
+        print(f"No images provided for {class_label}")
+        return None
+
+    if verbose:
+        print(f"\nProcessing {len(file_list)} images for {class_label}")
+
+    # Split into train and test
+    train_files, test_files = train_test_split(
+        file_list, test_size=test_size, random_state=random_state
+    )
+
+    # Create destination directories
+    train_dir = os.path.join(data_root, "train", class_label)
+    test_dir = os.path.join(data_root, "test", class_label)
+
+    os.makedirs(train_dir, exist_ok=True)
+    os.makedirs(test_dir, exist_ok=True)
+
+    # Copy/move files
+    operation = "Copying" if copy else "Moving"
+
+    if verbose:
+        print(f"{operation} {len(train_files)} images to training set...")
+
+    for file_path in train_files:
+        filename = os.path.basename(file_path)
+        dest_path = os.path.join(train_dir, filename)
+
+        # Handle duplicate filenames
+        counter = 1
+        base_name, ext = os.path.splitext(filename)
+        while os.path.exists(dest_path):
+            new_filename = f"{base_name}_{counter}{ext}"
+            dest_path = os.path.join(train_dir, new_filename)
+            counter += 1
+
+        if copy:
+            shutil.copy2(file_path, dest_path)
+        else:
+            shutil.move(file_path, dest_path)
+
+    if verbose:
+        print(f"{operation} {len(test_files)} images to test set...")
+
+    for file_path in test_files:
+        filename = os.path.basename(file_path)
+        dest_path = os.path.join(test_dir, filename)
+
+        # Handle duplicate filenames
+        counter = 1
+        base_name, ext = os.path.splitext(filename)
+        while os.path.exists(dest_path):
+            new_filename = f"{base_name}_{counter}{ext}"
+            dest_path = os.path.join(test_dir, new_filename)
+            counter += 1
+
+        if copy:
+            shutil.copy2(file_path, dest_path)
+        else:
+            shutil.move(file_path, dest_path)
+
+    stats = {
+        "class_label": class_label,
+        "total_images": len(file_list),
+        "train_images": len(train_files),
+        "test_images": len(test_files),
+        "operation": "copy" if copy else "move",
+    }
+
+    if verbose:
+        print(f"✓ Organization complete for {class_label}")
+        print(f"  Training: {len(train_files)} images")
+        print(f"  Test: {len(test_files)} images")
+
+    return stats
+
+
+def organize_from_before_after(
+    load_dir,
+    data_root,
+    test_size=0.2,
+    random_state=42,
+    copy=True,
+    verbose=True,
+):
+    """
+    Organize images from before/after directory structure.
+
+    The 'after' directory contains target species (sorted/curated images).
+    The 'before' directory contains all images (both target and non-target).
+    Non-target images are identified as those in 'before' but not in 'after'
+    (compared by filename).
+
+    Directory structure expected:
+        load_dir/
+        ├── before/     # All images (unsorted)
+        └── after/      # Only target species images (sorted)
+
+    Args:
+        load_dir (str): Directory containing 'before' and 'after' subdirectories
+        data_root (str): Root directory for organized data
+        test_size (float): Proportion of data for testing
+        random_state (int): Random seed for reproducibility
+        copy (bool): If True, copy files; if False, move files
+        verbose (bool): Print progress information
+
+    Returns:
+        dict: Statistics about organized data for both classes
+    """
+    before_dir = os.path.join(load_dir, "before")
+    after_dir = os.path.join(load_dir, "after")
+
+    # Check that both directories exist
+    if not os.path.exists(before_dir):
+        raise FileNotFoundError(f"'before' directory not found: {before_dir}")
+    if not os.path.exists(after_dir):
+        raise FileNotFoundError(f"'after' directory not found: {after_dir}")
+
+    # Get all image files
+    before_files = get_image_files(before_dir)
+    after_files = get_image_files(after_dir)
+
+    if len(before_files) == 0:
+        raise ValueError(f"No images found in 'before' directory: {before_dir}")
+    if len(after_files) == 0:
+        raise ValueError(f"No images found in 'after' directory: {after_dir}")
+
+    # Get filenames only (not full paths) for comparison
+    after_filenames = set(os.path.basename(f) for f in after_files)
+
+    # Separate target species (in 'after') from other species (in 'before' but not in 'after')
+    target_species_files = after_files
+    other_species_files = [
+        f for f in before_files if os.path.basename(f) not in after_filenames
+    ]
+
+    if verbose:
+        print("\n" + "=" * 60)
+        print("ANALYZING BEFORE/AFTER DIRECTORIES")
+        print("=" * 60)
+        print(f"\nTotal images in 'before': {len(before_files)}")
+        print(f"Total images in 'after': {len(after_files)}")
+        print(f"\nIdentified classes:")
+        print(f"  Target species (in 'after'): {len(target_species_files)} images")
+        print(f"  Other species (in 'before' only): {len(other_species_files)} images")
+
+    if len(other_species_files) == 0:
+        raise ValueError(
+            "No non-target images found. All 'before' images are in 'after'."
+        )
+
+    stats = {}
+
+    # Organize target species
+    if verbose:
+        print("\n" + "=" * 60)
+        print("ORGANIZING TARGET SPECIES")
+        print("=" * 60)
+
+    target_stats = organize_files_list(
+        file_list=target_species_files,
+        data_root=data_root,
+        class_label="target_species",
+        test_size=test_size,
+        random_state=random_state,
+        copy=copy,
+        verbose=verbose,
+    )
+    stats["target_species"] = target_stats
+
+    # Organize other species
+    if verbose:
+        print("\n" + "=" * 60)
+        print("ORGANIZING OTHER SPECIES")
+        print("=" * 60)
+
+    other_stats = organize_files_list(
+        file_list=other_species_files,
+        data_root=data_root,
+        class_label="other_species",
+        test_size=test_size,
+        random_state=random_state,
+        copy=copy,
+        verbose=verbose,
+    )
+    stats["other_species"] = other_stats
+
+    return stats
+
+
 def print_dataset_statistics(data_root):
     """
     Print statistics about the organized dataset.
@@ -369,6 +591,9 @@ Examples:
   # Interactive mode
   python organize_dataset.py --interactive
 
+  # Organize from before/after directory structure (NEW)
+  python organize_dataset.py --from-before-after --load-dir src/load
+
   # Organize target species images
   python organize_dataset.py --source src/Myosotis_sylvatica --class target_species
 
@@ -386,7 +611,7 @@ Examples:
     parser.add_argument(
         "--data-root",
         type=str,
-        default="../data",
+        default="data",
         help="Root directory for organized data (default: ../data)",
     )
 
@@ -426,6 +651,19 @@ Examples:
         "--stats", action="store_true", help="Show dataset statistics only"
     )
 
+    parser.add_argument(
+        "--from-before-after",
+        action="store_true",
+        help="Organize from before/after directory structure in load directory",
+    )
+
+    parser.add_argument(
+        "--load-dir",
+        type=str,
+        default="src/load",
+        help="Directory containing 'before' and 'after' subdirectories (default: src/load)",
+    )
+
     args = parser.parse_args()
 
     # Create data root if it doesn't exist
@@ -439,6 +677,26 @@ Examples:
     # Interactive mode
     if args.interactive:
         interactive_mode(args.data_root)
+        return
+
+    # Before/after mode
+    if args.from_before_after:
+        print("\n" + "=" * 60)
+        print("ORGANIZING FROM BEFORE/AFTER STRUCTURE")
+        print("=" * 60)
+
+        stats = organize_from_before_after(
+            load_dir=args.load_dir,
+            data_root=args.data_root,
+            test_size=args.test_size,
+            random_state=args.random_state,
+            copy=not args.move,
+            verbose=True,
+        )
+
+        if stats:
+            print("\n✓ Dataset organization complete!")
+            print_dataset_statistics(args.data_root)
         return
 
     # Validate arguments for non-interactive mode

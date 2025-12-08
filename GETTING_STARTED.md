@@ -40,7 +40,7 @@ pip install -r requirements.txt
 
 ## Step 2: Prepare Your Data (5 minutes)
 
-You have three options:
+You have four options:
 
 ### Option A: Quick Test with Synthetic Data ⚡ (Fastest)
 
@@ -53,9 +53,33 @@ python train_svm.py --create-synthetic
 
 This creates fake images for testing. Skip to **Step 3**.
 
-### Option B: Use the Interactive Organizer 🎯 (Recommended)
+### Option B: Use Before/After Directory Structure 🎯 (Recommended for Sorted Data)
 
-If you have your own plant images:
+If you have already sorted your target species from a larger collection:
+
+1. Create the directory structure:
+```bash
+mkdir -p src/load/before
+mkdir -p src/load/after
+```
+
+2. Place your images:
+   - **`src/load/before/`** - All images (unsorted collection)
+   - **`src/load/after/`** - Only target species images (manually sorted)
+
+3. Run the organization script:
+```bash
+cd src
+python organize_dataset.py --from-before-after --load-dir src/load
+```
+
+The script will automatically identify non-target images as those in 'before' but not in 'after' (compared by filename).
+
+**This is perfect when you've already manually sorted out your target species!**
+
+### Option C: Use the Interactive Organizer 🔧
+
+If you have separate directories for each class:
 
 ```bash
 cd src
@@ -66,7 +90,7 @@ Follow the prompts to organize your images. You'll need:
 - Images of your **target species** (the plant you want to identify)
 - Images of **other species** (plants that are NOT your target)
 
-### Option C: Manual Organization 📁
+### Option D: Manual Organization 📁
 
 Create this folder structure and add your images:
 
@@ -271,9 +295,11 @@ Here's a complete example from start to finish:
 cd svmTest
 pip install -r requirements.txt
 
-# 2. Organize data interactively
+# 2. Organize data using before/after structure
+mkdir -p src/load/before src/load/after
+# (Place all images in 'before', target species in 'after')
 cd src
-python organize_dataset.py --interactive
+python organize_dataset.py --from-before-after --load-dir src/load
 
 # 3. Train model (fast mode)
 python train_svm.py --no-grid-search

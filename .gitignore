@@ -58,17 +58,34 @@ data/processed/
 !data/train/.gitkeep
 !data/test/.gitkeep
 
+# src load directories
+
+!src/load/*/.gitkeep
+!src/load/before/.gitkeep
+
+src/load/*/*.jpg
+src/load/*/*.png
+src/load/*/*.gif
+src/load/*/*.bmp
+src/load/*/*.tiff
+src/load/*/*.webp
+src/load/*/*.ico
+src/load/*/*.svg
+src/load/*/*.jpeg
+
 # Model files (can be very large)
 models/*.pkl
 models/*.h5
 models/*.pt
 models/*.pth
 models/*.joblib
+models/*
 
 # Keep models directory
 !models/.gitkeep
 
 # Results and outputs
+results/*
 results/*.png
 results/*.jpg
 results/*.json

@@ -1,8 +1,8 @@
 """
-Data Loader Module for Plant Image Classification
+Data Loader Module for Image Classification
 
 This module handles loading, preprocessing, and managing image datasets
-for SVM-based plant species classification.
+for SVM-based image classification.
 """
 
 import os
@@ -14,9 +14,9 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 
-class PlantImageDataLoader:
+class ImageDataLoader:
     """
-    Manages loading and organizing plant image datasets for classification.
+    Manages loading and organizing image datasets for classification.
     """
 
     def __init__(self, data_root="data"):

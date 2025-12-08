@@ -32,7 +32,7 @@ from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
-from data_loader import PlantImageDataLoader
+from data_loader import ImageDataLoader
 from feature_extractor import ImageFeatureExtractor
 
 
@@ -518,11 +518,11 @@ def main():
     }
 
     print("\n" + "=" * 60)
-    print("SVM PLANT IMAGE CLASSIFIER - TRAINING")
+    print("SVM BINARY IMAGE CLASSIFIER - TRAINING")
     print("=" * 60)
 
     # Initialize data loader
-    data_loader = PlantImageDataLoader(data_root=args.data_root)
+    data_loader = ImageDataLoader(data_root=args.data_root)
 
     # Create synthetic dataset if requested
     if args.create_synthetic:
